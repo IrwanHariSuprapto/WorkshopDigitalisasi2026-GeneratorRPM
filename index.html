@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RPM Prompt Studio — Generator Prompt Rencana Pembelajaran Mendalam</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  if (window.tailwind) tailwind.config = {
+    darkMode: 'class',
+    theme: { extend: {
+      fontFamily: { sans: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', 'sans-serif'], mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'] },
+      colors: { cyan: { neon: '#06b6d4' }, ebl: '#3b82f6', gold: '#f59e0b' }
+    } }
+  };
+</script>
+<style>
+  :root {
+    --bg1: #f1f5f9; --bg2: #e0e7ff;
+    --card: rgba(255,255,255,0.72); --card-border: rgba(15,23,42,0.08);
+    --text: #0f172a; --muted: #64748b; --soft: #334155;
+    --input: rgba(255,255,255,0.9); --input-border: rgba(15,23,42,0.14);
+    --chip: rgba(15,23,42,0.04); --glow: rgba(6,182,212,0.18);
+  }
+  html.dark {
+    --bg1: #0f172a; --bg2: #1e1b4b;
+    --card: rgba(255,255,255,0.045); --card-border: rgba(255,255,255,0.09);
+    --text: #e2e8f0; --muted: #94a3b8; --soft: #cbd5e1;
+    --input: rgba(2,6,23,0.55); --input-border: rgba(148,163,184,0.18);
+    --chip: rgba(255,255,255,0.04); --glow: rgba(6,182,212,0.25);
+  }
+  body {
+    font-family: 'Plus Jakarta Sans', Inter, system-ui, sans-serif;
+    color: var(--text);
+    background: radial-gradient(1200px 600px at 10% -10%, rgba(6,182,212,0.14), transparent 60%),
+                radial-gradient(900px 600px at 110% 10%, rgba(59,130,246,0.16), transparent 60%),
+                linear-gradient(135deg, var(--bg1), var(--bg2));
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  .glass { background: var(--card); border: 1px solid var(--card-border); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-radius: 1.25rem; }
+  .muted { color: var(--muted); }
+  .soft { color: var(--soft); }
+  .field-label { display:flex; align-items:center; gap:.4rem; font-size:.8rem; font-weight:600; color: var(--soft); margin-bottom:.35rem; }
+  .req { font-size:.6rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:#f59e0b; background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.3); padding:.05rem .4rem; border-radius:999px; }
+  .inp { width:100%; background: var(--input); border:1px solid var(--input-border); color: var(--text); border-radius:.75rem; padding:.6rem .8rem; font-size:.875rem; transition: border-color .15s, box-shadow .15s; }
+  .inp::placeholder { color: var(--muted); opacity:.75; }
+  .inp:focus { outline:none; border-color:#06b6d4; box-shadow: 0 0 0 3px var(--glow); }
+  textarea.inp { resize: vertical; min-height: 4.5rem; line-height:1.5; }
+  select.inp { appearance:none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position: right .7rem center; padding-right:2.2rem; }
+  select.inp option { color:#0f172a; }
+  .chip { cursor:pointer; user-select:none; display:inline-flex; align-items:center; gap:.4rem; padding:.42rem .8rem; border-radius:999px; font-size:.8rem; font-weight:500; border:1px solid var(--input-border); background: var(--chip); color: var(--soft); transition: all .15s; }
+  .chip:hover { border-color: rgba(59,130,246,.6); }
+  .chip.on { background: rgba(59,130,246,.16); border-color:#3b82f6; color: var(--text); box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+  .chip .dot { width:.5rem; height:.5rem; border-radius:999px; background: var(--input-border); transition: background .15s; }
+  .chip.on .dot { background:#3b82f6; box-shadow:0 0 8px #3b82f6; }
+  .toggle-row { border:1px solid var(--input-border); background: var(--chip); border-radius:.9rem; padding:.7rem .8rem; transition: all .15s; }
+  .toggle-row.on { border-color: rgba(6,182,212,.55); background: rgba(6,182,212,.07); }
+  .switch { position:relative; width:2.3rem; height:1.3rem; flex-shrink:0; border-radius:999px; background: rgba(148,163,184,.35); transition: background .2s; cursor:pointer; }
+  .switch::after { content:''; position:absolute; top:.15rem; left:.15rem; width:1rem; height:1rem; border-radius:999px; background:#fff; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+  .toggle-row.on .switch { background:#06b6d4; }
+  .toggle-row.on .switch::after { transform: translateX(1rem); }
+  .toggle-row .extra { display:none; margin-top:.6rem; }
+  .toggle-row.on .extra { display:block; }
+  .card-num { width:2rem; height:2rem; border-radius:.65rem; display:grid; place-items:center; font-weight:800; font-size:.85rem; color:#fff; background: linear-gradient(135deg,#06b6d4,#3b82f6); box-shadow: 0 6px 18px -6px rgba(6,182,212,.7); flex-shrink:0; }
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:.45rem; font-weight:600; font-size:.82rem; border-radius:.75rem; padding:.55rem .9rem; transition: all .15s; white-space:nowrap; }
+  .btn-ghost { border:1px solid var(--input-border); background: var(--chip); color: var(--soft); }
+  .btn-ghost:hover { border-color:#06b6d4; color: var(--text); }
+  .btn-primary { background: linear-gradient(135deg,#06b6d4,#0891b2); color:#022c33; font-weight:700; box-shadow: 0 8px 24px -8px rgba(6,182,212,.8), inset 0 1px 0 rgba(255,255,255,.35); }
+  .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .tab { padding:.4rem .75rem; font-size:.78rem; font-weight:600; border-radius:.6rem; color:#94a3b8; transition: all .15s; }
+  .tab.on { background: rgba(59,130,246,.2); color:#e2e8f0; box-shadow: inset 0 0 0 1px rgba(59,130,246,.6); }
+  /* Preview (selalu gelap untuk keterbacaan kode) */
+  .preview { background:#0b1120; border:1px solid rgba(148,163,184,.14); color:#cbd5e1; font-family:'JetBrains Mono', monospace; font-size:.74rem; line-height:1.65; white-space:pre-wrap; word-break:break-word; }
+  .preview .h { color:#fbbf24; font-weight:700; }
+  .preview .c { color:#64748b; font-style:italic; }
+  .preview .lbl { color:#93c5fd; }
+  .preview .val { color:#22d3ee; }
+  .preview .ph { color:#f472b6; background: rgba(244,114,182,.1); border-radius:.25rem; padding:0 .15rem; }
+  .preview .ck { color:#34d399; font-weight:700; }
+  .preview .num { color:#c4b5fd; font-weight:600; }
+  .preview::-webkit-scrollbar, .scroll-thin::-webkit-scrollbar { width:8px; }
+  .preview::-webkit-scrollbar-thumb, .scroll-thin::-webkit-scrollbar-thumb { background: rgba(148,163,184,.25); border-radius:8px; }
+  .toast { transform: translate(-50%, 140%); transition: transform .35s cubic-bezier(.2,.9,.3,1.2); }
+  .toast.show { transform: translate(-50%, 0); }
+  .badge-gold { font-size:.65rem; font-weight:700; color:#f59e0b; background: rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.35); padding:.1rem .5rem; border-radius:999px; }
+  .progress-bar { background: linear-gradient(90deg,#06b6d4,#3b82f6); transition: width .4s; }
+  .hint { font-size:.72rem; color: var(--muted); margin-top:.3rem; }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
+</style>
+</head>
+<body class="antialiased">
+
+<!-- ================= HEADER ================= -->
+<header class="sticky top-0 z-40 border-b" style="border-color:var(--card-border); background: color-mix(in srgb, var(--bg1) 70%, transparent); backdrop-filter: blur(16px);">
+  <div class="max-w-[1500px] mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
+    <div class="w-10 h-10 rounded-xl grid place-items-center shrink-0" style="background:linear-gradient(135deg,#06b6d4,#3b82f6 60%,#6366f1); box-shadow:0 8px 24px -8px rgba(6,182,212,.8)">
+      <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M12 3 2.5 8 12 13l9.5-5L12 3Z"/><path d="M6 10.2V15c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.8"/><circle cx="21" cy="14.5" r="1"/><path d="M21 8v5.5"/>
+      </svg>
+    </div>
+    <div class="min-w-0">
+      <h1 class="font-extrabold text-base sm:text-lg leading-tight tracking-tight">RPM Prompt <span style="background:linear-gradient(90deg,#06b6d4,#3b82f6);-webkit-background-clip:text;background-clip:text;color:transparent">Studio</span></h1>
+      <p class="muted text-[11px] sm:text-xs truncate">Perancang Instruksi Rencana Pembelajaran Mendalam · PID &amp; Rumah Pendidikan</p>
+    </div>
+    <div class="hidden md:flex items-center gap-2 ml-6">
+      <div class="w-36 h-1.5 rounded-full overflow-hidden" style="background:var(--input-border)"><div id="progressBar" class="progress-bar h-full rounded-full" style="width:0%"></div></div>
+      <span id="progressText" class="text-xs muted font-medium">0% wajib terisi</span>
+    </div>
+    <div class="ml-auto flex items-center gap-2">
+      <button id="btnReset" class="btn btn-ghost" title="Kosongkan formulir">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+        <span class="hidden sm:inline">Reset Form</span>
+      </button>
+      <button id="btnExample" class="btn btn-ghost" title="Isi contoh otomatis">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m12 3 1.9 5.8H20l-4.9 3.6 1.9 5.8L12 14.6l-4.9 3.6 1.9-5.8L4 8.8h6.1Z"/></svg>
+        <span class="hidden sm:inline">Contoh Isian</span>
+      </button>
+      <button id="btnTheme" class="btn btn-ghost !px-2.5" title="Ganti mode terang/gelap" aria-label="Ganti tema">
+        <svg id="icoSun" class="w-4 h-4 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg id="icoMoon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-[1500px] mx-auto px-4 sm:px-6 py-6 grid gap-6 lg:grid-cols-[55fr_45fr] items-start">
+
+  <!-- ================= KOLOM KIRI: FORM ================= -->
+  <section id="form" class="space-y-5 min-w-0">
+
+    <!-- 1. Konteks Kelas -->
+    <div class="glass p-5 sm:p-6">
+      <div class="flex items-start gap-3 mb-5">
+        <div class="card-num">1</div>
+        <div>
+          <h2 class="font-bold text-base">Identitas &amp; Konteks Kelas</h2>
+          <p class="muted text-xs">Gambaran kelas yang akan dijadikan dasar perencanaan.</p>
+        </div>
+      </div>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div><label class="field-label">Jenjang / Kelas <span class="req">Wajib</span></label><input class="inp" data-k="kelas" placeholder="cth. SMA / Kelas X" /></div>
+        <div><label class="field-label">Mata Pelajaran <span class="req">Wajib</span></label><input class="inp" data-k="mapel" placeholder="cth. Biologi" /></div>
+        <div class="sm:col-span-2"><label class="field-label">Topik / Materi Pokok <span class="req">Wajib</span></label><input class="inp" data-k="topik" placeholder="cth. Perubahan Lingkungan dan Pencemaran" /></div>
+        <div><label class="field-label">Fase Kurikulum Nasional <span class="req">Wajib</span></label>
+          <select class="inp" data-k="fase">
+            <option value="">— Pilih Fase —</option>
+            <option value="Fase A">Fase A (Kelas 1–2 SD)</option>
+            <option value="Fase B">Fase B (Kelas 3–4 SD)</option>
+            <option value="Fase C">Fase C (Kelas 5–6 SD)</option>
+            <option value="Fase D">Fase D (Kelas 7–9 SMP)</option>
+            <option value="Fase E">Fase E (Kelas X SMA/SMK)</option>
+            <option value="Fase F">Fase F (Kelas XI–XII SMA/SMK)</option>
+          </select>
+        </div>
+        <div><label class="field-label">Jumlah Peserta Didik <span class="req">Wajib</span></label><input class="inp" type="number" min="1" data-k="jumlahPD" placeholder="cth. 32" /></div>
+        <div class="sm:col-span-2"><label class="field-label">Kondisi Kelas <span class="req">Wajib</span></label>
+          <textarea class="inp" data-k="kondisi" rows="2" placeholder="cth. Kemampuan heterogen; 4 peserta didik kesulitan membaca teks panjang; sebagian besar visual-kinestetik; 1 peserta didik berkebutuhan khusus (low vision)."></textarea>
+          <p class="hint">Sebutkan kondisi khusus — AI wajib menuliskan diferensiasinya.</p>
+        </div>
+      </div>
+      <div class="mt-4 p-4 rounded-xl" style="background:var(--chip); border:1px dashed var(--input-border)">
+        <div class="field-label !mb-3">Alokasi Waktu</div>
+        <div class="grid grid-cols-3 gap-3">
+          <div><label class="text-[11px] muted">Jumlah pertemuan</label><input class="inp mt-1" type="number" min="1" data-k="pertemuan" value="2" /></div>
+          <div><label class="text-[11px] muted">JP / pertemuan</label><input class="inp mt-1" type="number" min="1" data-k="jp" value="2" /></div>
+          <div><label class="text-[11px] muted">Menit / JP</label><input class="inp mt-1" type="number" min="1" data-k="menitJP" value="45" /></div>
+        </div>
+        <p class="text-xs mt-3 soft">⏱ <span id="alokasiPreview" class="font-semibold"></span></p>
+      </div>
+    </div>
+
+    <!-- 2. Keputusan Profesional Guru -->
+    <div class="glass p-5 sm:p-6">
+      <div class="flex items-start gap-3 mb-5">
+        <div class="card-num">2</div>
+        <div class="flex-1">
+          <h2 class="font-bold text-base flex flex-wrap items-center gap-2">Keputusan Profesional Guru <span class="badge-gold">AI tidak boleh mengubah</span></h2>
+          <p class="muted text-xs">Masalah, tujuan, dan model pilihan Anda menjadi landasan yang dikunci di prompt.</p>
+        </div>
+      </div>
+      <div class="space-y-4">
+        <div><label class="field-label">Masalah Utama Pembelajaran <span class="req">Wajib</span></label>
+          <textarea class="inp" data-k="masalah" rows="3" placeholder="Masalah nyata yang Anda temukan di kelas terkait topik ini — menjadi benang merah seluruh perencanaan."></textarea>
+        </div>
+        <div><label class="field-label">Capaian Pembelajaran (CP) <span class="muted font-normal text-[11px]">— opsional, sebagai acuan</span></label>
+          <textarea class="inp" data-k="cp" rows="2" placeholder="Tempel kutipan CP elemen yang relevan."></textarea>
+        </div>
+        <div><label class="field-label">Tujuan Pembelajaran — Hasil Analisis CP <span class="req">Wajib</span></label>
+          <textarea class="inp" data-k="tp" rows="4" placeholder="TP-1: Peserta didik dapat menganalisis ...&#10;TP-2: Peserta didik dapat merancang ...&#10;TP-3: Peserta didik dapat merefleksikan ..."></textarea>
+          <p class="hint">Tulis persis seperti hasil analisis Anda; AI akan menyajikannya apa adanya.</p>
+        </div>
+        <div class="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
+          <div><label class="field-label">Model Pembelajaran <span class="req">Wajib</span></label>
+            <select class="inp" data-k="model" id="selModel"></select>
+          </div>
+          <button id="btnSintak" class="btn btn-ghost h-[42px]" type="button" title="Isi ulang sintak standar model terpilih">↻ Sintak standar</button>
+        </div>
+        <div id="modelLainWrap" class="hidden"><label class="field-label">Nama model lainnya</label><input class="inp" data-k="modelLain" placeholder="cth. Team Games Tournament (TGT)" /></div>
+        <div><label class="field-label">Sintak Model Pembelajaran <span class="req">Wajib</span></label>
+          <textarea class="inp font-mono !text-[12.5px]" data-k="sintak" rows="6"></textarea>
+          <p class="hint">Terisi otomatis sesuai model; silakan sesuaikan.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Kerangka Pembelajaran Mendalam -->
+    <div class="glass p-5 sm:p-6">
+      <div class="flex items-start gap-3 mb-5">
+        <div class="card-num">3</div>
+        <div>
+          <h2 class="font-bold text-base">Kerangka Pembelajaran Mendalam</h2>
+          <p class="muted text-xs">Opsional — mempertajam arah AI. Kosongkan bila ingin AI yang mengembangkan.</p>
+        </div>
+      </div>
+
+      <div class="field-label">3 Prinsip Utama</div>
+      <div class="grid gap-2.5 mb-5" data-group="prinsip"></div>
+
+      <div class="field-label">Fokus Pengalaman Belajar</div>
+      <div class="grid sm:grid-cols-3 gap-3 mb-5">
+        <div><label class="text-[11px] font-semibold" style="color:#06b6d4">① MEMAHAMI</label><textarea class="inp mt-1" rows="3" data-k="fokusMemahami" placeholder="Aktivitas membangun konsep…"></textarea></div>
+        <div><label class="text-[11px] font-semibold" style="color:#3b82f6">② MENGAPLIKASI</label><textarea class="inp mt-1" rows="3" data-k="fokusMengaplikasi" placeholder="Aktivitas pemecahan masalah…"></textarea></div>
+        <div><label class="text-[11px] font-semibold" style="color:#a78bfa">③ MEREFLEKSI</label><textarea class="inp mt-1" rows="3" data-k="fokusMerefleksi" placeholder="Bentuk refleksi…"></textarea></div>
+      </div>
+
+      <div class="field-label">Dimensi Profil Lulusan <span class="muted font-normal text-[11px]">— pilih 2–3 atau biarkan AI menentukan</span></div>
+      <div class="flex flex-wrap gap-2" data-chips="profil"></div>
+    </div>
+
+    <!-- 4. Ekosistem Digital -->
+    <div class="glass p-5 sm:p-6">
+      <div class="flex items-start gap-3 mb-5">
+        <div class="card-num">4</div>
+        <div class="flex-1">
+          <h2 class="font-bold text-base flex flex-wrap items-center gap-2">PID &amp; Rumah Pendidikan <span class="badge-gold">Fitur unggulan</span></h2>
+          <p class="muted text-xs">Pilih hanya yang benar-benar akan dipakai, beserta tujuannya.</p>
+        </div>
+      </div>
+
+      <div class="field-label">Fitur Papan Interaktif Digital (PID/IFP)</div>
+      <div class="grid sm:grid-cols-2 gap-2.5 mb-5" data-group="pid"></div>
+
+      <div class="field-label">Ruang di Rumah Pendidikan</div>
+      <div class="flex flex-wrap gap-2 mb-4" data-chips="ruang"></div>
+      <div class="grid gap-4">
+        <div><label class="field-label">Jenis Konten / Fitur yang Dipilih</label><input class="inp" data-k="kontenRP" placeholder="cth. Video pembelajaran, Buku digital, Bank soal, Modul ajar" /></div>
+        <div><label class="field-label">Rencana Penggunaan di Kelas</label><textarea class="inp" data-k="rencanaRP" rows="2" placeholder="Kapan dan bagaimana konten tersebut digunakan."></textarea></div>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div><label class="field-label">Teknologi Digital Lain <span class="muted font-normal text-[11px]">— opsional</span></label><input class="inp" data-k="teknologi" placeholder="cth. Google Form, Padlet, Canva" /></div>
+          <div><label class="field-label">Konteks Lokal / Kearifan Daerah <span class="muted font-normal text-[11px]">— opsional</span></label><input class="inp" data-k="lokal" placeholder="cth. Isu lingkungan di daerah sekitar sekolah" /></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Asesmen -->
+    <div class="glass p-5 sm:p-6">
+      <div class="flex items-start gap-3 mb-5">
+        <div class="card-num">5</div>
+        <div>
+          <h2 class="font-bold text-base">Asesmen</h2>
+          <p class="muted text-xs">Jenis asesmen yang diminta untuk disusun AI.</p>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-2" data-chips="asesmen"></div>
+    </div>
+
+    <p class="text-center muted text-xs pb-4">Semua data tersimpan otomatis di peramban Anda (tanpa server).</p>
+  </section>
+
+  <!-- ================= KOLOM KANAN: PRATINJAU ================= -->
+  <aside class="lg:sticky lg:top-[84px] min-w-0">
+    <div class="glass p-4 sm:p-5 flex flex-col lg:h-[calc(100vh-108px)]">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <div class="flex items-center gap-2">
+          <span class="relative flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-60"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-400"></span></span>
+          <h2 class="font-bold text-sm">Pratinjau Prompt <span class="muted font-normal">· real-time</span></h2>
+        </div>
+        <div class="text-[11px] font-mono muted" id="counter">0 kata · 0 karakter</div>
+      </div>
+      <div class="flex items-center gap-1 p-1 rounded-xl mb-3" style="background:#0b1120; border:1px solid rgba(148,163,184,.14)" role="tablist">
+        <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold px-2 hidden sm:inline">Optimasi</span>
+        <button class="tab on" data-target="gemini">Gemini</button>
+        <button class="tab" data-target="chatgpt">ChatGPT</button>
+        <button class="tab" data-target="claude">Claude</button>
+      </div>
+      <pre id="preview" class="preview rounded-xl p-4 flex-1 overflow-auto min-h-[420px] max-h-[70vh] lg:max-h-none"></pre>
+      <div class="flex flex-wrap items-center gap-2 mt-3">
+        <button id="btnCopy" class="btn btn-primary flex-1 min-w-[150px] !py-3">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>
+          Salin Prompt
+        </button>
+        <button id="btnOpen" class="btn btn-ghost !py-3">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
+          <span id="btnOpenLabel">Buka di Gemini</span>
+        </button>
+        <button id="btnDownload" class="btn btn-ghost !py-3">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+          Unduh (.txt)
+        </button>
+      </div>
+      <p class="text-[11px] muted mt-2.5 leading-relaxed"><span style="color:#f472b6">■</span> teks merah muda = bagian wajib yang belum diisi &nbsp; <span style="color:#22d3ee">■</span> isian Anda</p>
+    </div>
+  </aside>
+</main>
+
+<div id="toast" class="toast fixed bottom-6 left-1/2 z-50 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2" style="background:#0b1120; color:#e2e8f0; border:1px solid rgba(6,182,212,.5); box-shadow:0 12px 40px -10px rgba(6,182,212,.6)">
+  <span class="w-5 h-5 rounded-full grid place-items-center text-[11px]" style="background:#06b6d4;color:#022c33">✓</span><span id="toastText">Prompt berhasil disalin!</span>
+</div>
+
+<script>
+/* ======================= DATA REFERENSI ======================= */
+const MODELS = {
+  'Problem-Based Learning (PBL)': [
+    'Orientasi peserta didik pada masalah',
+    'Mengorganisasikan peserta didik untuk belajar',
+    'Membimbing penyelidikan individual/kelompok',
+    'Mengembangkan dan menyajikan hasil karya',
+    'Menganalisis dan mengevaluasi proses pemecahan masalah'],
+  'Project-Based Learning (PjBL)': [
+    'Penentuan pertanyaan mendasar',
+    'Mendesain perencanaan proyek',
+    'Menyusun jadwal pelaksanaan',
+    'Memonitor peserta didik dan kemajuan proyek',
+    'Menguji hasil (presentasi/publikasi produk)',
+    'Mengevaluasi pengalaman belajar'],
+  'Inquiry Learning': [
+    'Orientasi',
+    'Merumuskan masalah',
+    'Merumuskan hipotesis',
+    'Mengumpulkan data',
+    'Menguji hipotesis',
+    'Merumuskan kesimpulan'],
+  'Discovery Learning': [
+    'Pemberian rangsangan (stimulation)',
+    'Identifikasi masalah (problem statement)',
+    'Pengumpulan data (data collection)',
+    'Pengolahan data (data processing)',
+    'Pembuktian (verification)',
+    'Menarik kesimpulan (generalization)'],
+  'Contextual Teaching and Learning (CTL)': [
+    'Konstruktivisme — membangun pengetahuan dari pengalaman',
+    'Menemukan (inquiry)',
+    'Bertanya (questioning)',
+    'Masyarakat belajar (learning community)',
+    'Pemodelan (modeling)',
+    'Refleksi',
+    'Penilaian autentik'],
+  'Cooperative Learning — Jigsaw': [
+    'Pembentukan kelompok asal',
+    'Pembagian sub-topik kepada setiap anggota',
+    'Diskusi kelompok ahli',
+    'Kembali ke kelompok asal dan saling mengajarkan',
+    'Presentasi dan kuis individual',
+    'Penghargaan kelompok'],
+  'Pembelajaran Berdiferensiasi': [
+    'Asesmen diagnostik kesiapan, minat, dan profil belajar',
+    'Pemetaan kebutuhan belajar peserta didik',
+    'Diferensiasi konten (materi sesuai kebutuhan)',
+    'Diferensiasi proses (aktivitas dan scaffolding berjenjang)',
+    'Diferensiasi produk (pilihan bentuk hasil belajar)',
+    'Refleksi dan umpan balik'],
+  'Lainnya': []
+};
+
+const PRINSIP = [
+  { k:'mindful', name:'Berkesadaran (Mindful)', ph:'cth. Peserta didik menyadari tujuan belajar & mengelola fokus lewat jurnal singkat' },
+  { k:'meaningful', name:'Bermakna (Meaningful)', ph:'cth. Mengaitkan materi dengan masalah nyata di lingkungan sekitar' },
+  { k:'joyful', name:'Menggembirakan (Joyful)', ph:'cth. Tantangan gamifikasi dan apresiasi karya teman' }
+];
+
+const PROFIL = ['Keimanan & Ketakwaan','Kewargaan','Penalaran Kritis','Kreativitas','Kolaborasi','Kemandirian','Kesehatan','Komunikasi'];
+
+const PID = [
+  { k:'touch', name:'Layar Sentuh Multi-Touch' },
+  { k:'anotasi', name:'Anotasi dan Menulis Digital' },
+  { k:'multimedia', name:'Integrasi Multimedia (video/simulasi)' },
+  { k:'share', name:'Berbagi Layar Nirkabel' },
+  { k:'dokumen', name:'Penyimpanan dan Berbagi Dokumen' },
+  { k:'internet', name:'Akses Internet dan Aplikasi langsung di PID' }
+];
+
+const RUANG = ['Ruang Murid','Ruang GTK','Ruang Bahasa'];
+const ASESMEN = [
+  { k:'diagnostik', name:'Asesmen Awal / Diagnostik' },
+  { k:'formatif', name:'Asesmen Proses / Formatif' },
+  { k:'sumatif', name:'Asesmen Akhir / Sumatif' },
+  { k:'rubrik', name:'Rubrik Penilaian' }
+];
+
+const REQUIRED = ['kelas','mapel','topik','fase','jumlahPD','kondisi','masalah','tp','model','sintak'];
+const STORE_KEY = 'rpm-prompt-studio-v1';
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+};
+
+/* ======================= STATE ======================= */
+const defaults = () => ({
+  kelas:'', mapel:'', topik:'', fase:'', jumlahPD:'', kondisi:'', pertemuan:'2', jp:'2', menitJP:'45',
+  masalah:'', cp:'', tp:'', model:'Problem-Based Learning (PBL)', modelLain:'',
+  sintak: MODELS['Problem-Based Learning (PBL)'].map((s,i)=>`Sintak ${i+1} — ${s}`).join('\n'),
+  prinsip:{}, prinsipTxt:{}, fokusMemahami:'', fokusMengaplikasi:'', fokusMerefleksi:'',
+  profil:[], pid:{}, pidTxt:{}, ruang:[], kontenRP:'', rencanaRP:'', teknologi:'', lokal:'',
+  asesmen:['diagnostik','formatif','sumatif','rubrik'], target:'gemini'
+});
+let S = defaults();
+try { const saved = JSON.parse(store.get(STORE_KEY)); if (saved) S = Object.assign(defaults(), saved); } catch(e) {}
+
+/* ======================= RENDER FORM ======================= */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function buildStatic() {
+  $('#selModel').innerHTML = Object.keys(MODELS).map(m=>`<option value="${esc(m)}">${esc(m)}</option>`).join('');
+
+  $('[data-group="prinsip"]').innerHTML = PRINSIP.map(p=>`
+    <div class="toggle-row" data-toggle="prinsip" data-id="${p.k}">
+      <div class="flex items-center gap-3 cursor-pointer" data-flip>
+        <div class="switch" role="switch" aria-label="${esc(p.name)}"></div>
+        <span class="text-sm font-semibold">${esc(p.name)}</span>
+      </div>
+      <div class="extra"><input class="inp" data-sub="prinsipTxt" data-id="${p.k}" placeholder="${esc(p.ph)}" /></div>
+    </div>`).join('');
+
+  $('[data-group="pid"]').innerHTML = PID.map(p=>`
+    <div class="toggle-row" data-toggle="pid" data-id="${p.k}">
+      <div class="flex items-center gap-3 cursor-pointer" data-flip>
+        <div class="switch" role="switch" aria-label="${esc(p.name)}"></div>
+        <span class="text-[13px] font-semibold leading-snug">${esc(p.name)}</span>
+      </div>
+      <div class="extra"><input class="inp !text-[13px]" data-sub="pidTxt" data-id="${p.k}" placeholder="Tujuan penggunaan…" /></div>
+    </div>`).join('');
+
+  const chips = (name, items) => items.map(it => {
+    const v = typeof it === 'string' ? it : it.k, label = typeof it === 'string' ? it : it.name;
+    return `<span class="chip" data-chip="${name}" data-v="${esc(v)}" tabindex="0" role="checkbox"><span class="dot"></span>${esc(label)}</span>`;
+  }).join('');
+  $('[data-chips="profil"]').innerHTML = chips('profil', PROFIL);
+  $('[data-chips="ruang"]').innerHTML = chips('ruang', RUANG);
+  $('[data-chips="asesmen"]').innerHTML = chips('asesmen', ASESMEN);
+}
+
+function fillForm() {
+  $$('[data-k]').forEach(el => { el.value = S[el.dataset.k] ?? ''; });
+  $$('[data-toggle]').forEach(el => el.classList.toggle('on', !!S[el.dataset.toggle][el.dataset.id]));
+  $$('[data-sub]').forEach(el => { el.value = S[el.dataset.sub][el.dataset.id] || ''; });
+  $$('[data-chip]').forEach(el => {
+    const on = S[el.dataset.chip].includes(el.dataset.v);
+    el.classList.toggle('on', on); el.setAttribute('aria-checked', on);
+  });
+  $$('.tab').forEach(t => t.classList.toggle('on', t.dataset.target === S.target));
+  $('#modelLainWrap').classList.toggle('hidden', S.model !== 'Lainnya');
+  update();
+}
+
+/* ======================= PROMPT BUILDER ======================= */
+const VO = '\u0001', VC = '\u0002';            // penanda isian pengguna (untuk highlight)
+const mark = v => VO + v + VC;
+const t = v => (v ?? '').toString().trim();
+const indent = (txt, n) => txt.split('\n').map((l,i)=> i ? ' '.repeat(n)+l : l).join('\n');
+const val = (v, ph, n=0) => t(v) ? mark(indent(t(v), n)) : `[${ph}]`;
+
+function alokasi() {
+  const p = +S.pertemuan || 0, jp = +S.jp || 0, m = +S.menitJP || 0;
+  if (!p || !jp || !m) return null;
+  return { p, jp, m, per: jp*m, total: p*jp*m, inti: Math.max(jp*m - 20, 10),
+    text: `${p} pertemuan × ${jp} JP × ${m} menit (${jp*m} menit/pertemuan, total ${p*jp*m} menit)` };
+}
+
+function modelName() { return S.model === 'Lainnya' ? t(S.modelLain) : S.model; }
+
+function build() {
+  const A = alokasi();
+  const model = modelName();
+  const L = [];
+  const push = (...x) => L.push(...x);
+
+  push('## PERAN',
+'Bertindaklah sebagai perancang perencanaan pembelajaran mendalam yang',
+'profesional. Anda memahami Kurikulum Nasional, Capaian Pembelajaran (CP),',
+'model-model pembelajaran inovatif beserta sintaknya, serta ekosistem digital',
+'pendidikan Indonesia: Papan Interaktif Digital (PID/IFP) dan Rumah Pendidikan',
+'Kemendikdasmen (Ruang Murid, Ruang GTK, Ruang Bahasa).', '');
+
+  push('## KONTEKS KELAS',
+`Jenjang/Kelas           : ${val(S.kelas,'ISIKAN JENJANG DAN KELAS ANDA')}`,
+`Mata Pelajaran          : ${val(S.mapel,'ISIKAN MATA PELAJARAN ANDA')}`,
+`Topik/Materi Pokok      : ${val(S.topik,'ISIKAN TOPIK PEMBELAJARAN ANDA')}`,
+`Fase Kurikulum Nasional : ${val(S.fase,'ISIKAN FASE — contoh: Fase D')}`,
+`Jumlah Peserta Didik    : ${t(S.jumlahPD) ? mark(t(S.jumlahPD)+' orang') : '[ISIKAN JUMLAH PESERTA DIDIK]'}`,
+`Kondisi Kelas           : ${val(S.kondisi,'ISIKAN KONDISI KHUSUS KELAS ANDA',26)}`,
+`Alokasi Waktu           : ${A ? mark(A.text) : '[ISIKAN ALOKASI WAKTU]'}`, '');
+
+  push('## INPUT GURU — KEPUTUSAN PROFESIONAL (WAJIB DIISI)',
+'// Bagian ini adalah keputusan profesional guru yang menjadi landasan',
+'// utama perencanaan. AI TIDAK BOLEH mengubah atau mengganti input ini.', '');
+
+  push('1. MASALAH UTAMA PEMBELAJARAN',
+'   Masalah ini menjadi titik berangkat dan benang merah seluruh perencanaan.',
+'   ' + val(S.masalah,'ISIKAN MASALAH UTAMA PEMBELAJARAN YANG ANDA IDENTIFIKASI',3), '');
+
+  push('2. TUJUAN PEMBELAJARAN — HASIL ANALISIS CP',
+'   // Gunakan tujuan berikut APA ADANYA — tidak menambah, tidak mengurangi.');
+  if (t(S.cp)) push('   Capaian Pembelajaran (acuan):', '   ' + val(S.cp,'',3), '   Tujuan Pembelajaran:');
+  push('   ' + val(S.tp,'ISIKAN TUJUAN PEMBELAJARAN HASIL ANALISIS CP ANDA',3), '');
+
+  push('3. MODEL PEMBELAJARAN YANG DIPILIH',
+`   Model Pembelajaran : ${val(model,'ISIKAN NAMA MODEL PEMBELAJARAN ANDA')}`,
+'   Sintak Model Pembelajaran:',
+'   ' + val(S.sintak,'ISIKAN URUTAN SINTAK MODEL YANG ANDA PILIH',3), '');
+
+  push('4. FITUR PID YANG AKAN DIGUNAKAN');
+  const pidOn = PID.filter(p => S.pid[p.k]);
+  if (pidOn.length) pidOn.forEach(p => push(`   [x] ${p.name}`, `       Tujuan: ${val(S.pidTxt[p.k],'ISIKAN TUJUAN PENGGUNAAN',15)}`));
+  else push('   [ISIKAN FITUR PID YANG AKAN DIGUNAKAN BESERTA TUJUANNYA]');
+  push('');
+
+  push('5. KONTEN RUMAH PENDIDIKAN YANG DIPILIH',
+'   Ruang yang digunakan:',
+'   ' + RUANG.map(r => (S.ruang.includes(r) ? '[x] ' : '[ ] ') + r).join('   '),
+'   Jenis konten/fitur yang dipilih:',
+'   ' + val(S.kontenRP,'ISIKAN JENIS KONTEN ATAU FITUR YANG DIPILIH',3),
+'   Rencana penggunaan di kelas:',
+'   ' + val(S.rencanaRP,'ISIKAN CARA DAN WAKTU PENGGUNAAN KONTEN INI DI KELAS',3), '');
+
+  // Preferensi tambahan (opsional)
+  const prinsipOn = PRINSIP.filter(p => S.prinsip[p.k]);
+  const fokus = [['Memahami',S.fokusMemahami],['Mengaplikasi',S.fokusMengaplikasi],['Merefleksi',S.fokusMerefleksi]].filter(f=>t(f[1]));
+  const extra = prinsipOn.length || fokus.length || S.profil.length || t(S.lokal) || t(S.teknologi);
+  if (extra) {
+    push('6. PREFERENSI PEMBELAJARAN MENDALAM (ARAHAN GURU)');
+    if (prinsipOn.length) {
+      push('   Penerapan prinsip pembelajaran mendalam:');
+      prinsipOn.forEach(p => push(`   - ${p.name}: ${t(S.prinsipTxt[p.k]) ? mark(indent(t(S.prinsipTxt[p.k]),5)) : 'kembangkan oleh AI'}`));
+    }
+    if (fokus.length) {
+      push('   Fokus aktivitas pengalaman belajar:');
+      fokus.forEach(([n,v]) => push(`   - ${n}: ${mark(indent(t(v),5))}`));
+    }
+    if (S.profil.length) push(`   Dimensi profil lulusan pilihan guru: ${mark(S.profil.join(', '))}`);
+    if (t(S.lokal)) push(`   Konteks lokal/kearifan daerah: ${mark(indent(t(S.lokal),5))}`);
+    if (t(S.teknologi)) push(`   Teknologi digital pendukung lain: ${mark(indent(t(S.teknologi),5))}`);
+    push('');
+  }
+
+  // ---------------- TUGAS AI ----------------
+  const modelRef = model || 'yang dipilih guru';
+  push('## TUGAS AI — SUSUN DOKUMEN PERENCANAAN BERIKUT:',
+'// Gunakan SELURUH input guru di atas sebagai landasan yang tidak',
+'// boleh diubah. AI merangkai, mengembangkan, dan menyempurnakan —',
+'// bukan menentukan arah. Benang merah seluruh dokumen adalah',
+'// masalah utama pembelajaran yang telah diinput guru.', '');
+
+  push('1. IDENTIFIKASI',
+'   a. Kesiapan peserta didik: jabarkan pengetahuan prasyarat,',
+'      potensi miskonsepsi terkait topik, dan implikasi kondisi',
+'      kelas terhadap strategi — berpijak pada masalah utama guru.',
+'   b. Karakteristik materi: uraikan konsep inti, kompleksitas,',
+'      dan keterkaitan lintas disiplin ilmu yang relevan.');
+  if (S.profil.length) push(
+`   c. Dimensi Profil Lulusan: gunakan dimensi pilihan guru (${S.profil.join(', ')}),`,
+'      jelaskan keterkaitan konkretnya dengan topik dan masalah yang diangkat.', '');
+  else push(
+'   c. Dimensi Profil Lulusan: identifikasi 2-3 dimensi yang paling',
+'      selaras dengan tujuan pembelajaran guru, jelaskan keterkaitan',
+'      konkretnya dengan topik dan masalah yang diangkat.', '');
+
+  push('2. DESAIN PEMBELAJARAN',
+'   a. Tujuan pembelajaran: sajikan PERSIS tujuan yang diinput guru',
+'      dalam format yang rapi. Tidak boleh diubah atau ditambah.',
+'   b. Rumusan masalah pembelajaran: kembangkan rumusan masalah',
+'      yang autentik dan kontekstual berdasarkan masalah utama guru,',
+'      selaras dengan tujuan pembelajaran, sesuai level peserta didik.',
+'   c. Integrasi lintas disiplin: identifikasi minimal 2 mata pelajaran',
+'      lain yang relevan, tunjukkan titik integrasinya secara konkret.',
+'   d. Kerangka pembelajaran — kembangkan 4 elemen:',
+'      - Praktik pedagogis: jabarkan penerapan model pembelajaran',
+`        ${modelRef} beserta sintaks lengkapnya secara`,
+'        operasional dalam konteks topik dan masalah ini.',
+'      - Kemitraan pembelajaran: peran guru sebagai fasilitator,',
+'        peran peserta didik sebagai pemecah masalah, peran mitra',
+'        (orang tua, komunitas, atau narasumber setempat).',
+'      - Lingkungan pembelajaran: penataan fisik kelas yang mendukung',
+'        model terpilih, dan kondisi psikologis yang dibangun.',
+'      - Pemanfaatan digital: jabarkan secara konkret penggunaan',
+'        fitur PID dan konten Rumah Pendidikan yang dipilih guru —',
+'        pada sintak ke berapa, untuk tujuan apa, cara pelaksanaannya.', '');
+
+  const as = S.asesmen, rub = as.includes('rubrik');
+  const asItems = [];
+  if (as.includes('diagnostik')) asItems.push([
+'Asesmen Diagnostik',
+'- 1 instrumen diagnostik awal (pertanyaan pemantik atau kuis singkat)',
+'- Cara pelaksanaan menggunakan PID',
+'- Cara membaca dan memanfaatkan hasilnya untuk diferensiasi']);
+  if (as.includes('formatif')) asItems.push([
+'Asesmen Formatif',
+'- Minimal 2 instrumen formatif sepanjang proses pembelajaran',
+...(rub ? ['- Sertakan rubrik penilaian sederhana untuk masing-masing'] : []),
+'- Cara pelaksanaan yang memanfaatkan PID dan/atau Ruang Murid',
+'  di Rumah Pendidikan']);
+  if (as.includes('sumatif')) asItems.push([
+'Asesmen Sumatif',
+`- 1 tugas/proyek autentik berbasis masalah (selaras dengan ${modelRef})`,
+...(rub ? ['- Rubrik penilaian lengkap (minimal 3 aspek dengan 4 level)'] : []),
+'- Keterkaitan dengan dimensi profil lulusan yang telah ditentukan']);
+  if (!asItems.length && rub) asItems.push(['Rubrik Penilaian', '- Rubrik penilaian lengkap (minimal 3 aspek dengan 4 level) untuk tugas utama']);
+  if (asItems.length) {
+    push('3. ASESMEN');
+    asItems.forEach((it, i) => {
+      push(`   ${'abc'[i] || 'd'}. ${it[0]}`, ...it.slice(1).map(l => '      ' + l));
+      push('');
+    });
+  }
+
+  const nPert = A ? A.p : null;
+  const pengNo = asItems.length ? 4 : 3;
+  push(`${pengNo}. PENGALAMAN BELAJAR`,
+`   Rancang tahapan pembelajaran lengkap untuk ${nPert ? mark(nPert + ' pertemuan') : '[ISIKAN JUMLAH PERTEMUAN]'}${nPert>1 ? ' (susun terpisah untuk setiap pertemuan, sebar sintak secara logis):' : ':'}`, '',
+`   PERTEMUAN 1${nPert>1 ? ' (ulangi struktur ini untuk pertemuan berikutnya)' : ''}:`,
+'   a. Kegiatan Pembuka (± 10 menit)',
+'      - Aktivitas menggembirakan untuk membangun antusias belajar',
+'      - Cara menampilkan pemantik masalah menggunakan PID',
+'      - Pertanyaan pemandu untuk mengaktifkan pengetahuan awal',
+`   b. Kegiatan Inti (± ${A ? mark(String(A.inti)) : '[ISIKAN DURASI INTI]'} menit)`,
+'      - Tahap MEMAHAMI: aktivitas membangun konsep secara mendalam',
+'        (sebutkan cara memanfaatkan konten dari Ruang Murid/Rumah Pendidikan)',
+`      - Tahap MENGAPLIKASI: aktivitas pemecahan masalah sesuai sintak ${modelRef}`,
+'        (sertakan titik penggunaan PID untuk kolaborasi dan presentasi)',
+'      - Tahap MEREFLEKSI: aktivitas refleksi terstruktur',
+'   c. Kegiatan Penutup (± 5-10 menit)',
+'      - Sintesis pembelajaran hari ini',
+'      - Koneksi ke pertemuan berikutnya (jika ada)',
+'      - Cara menyimpan dan berbagi catatan PID kepada peserta didik', '');
+
+  push('## INTEGRASI RUMAH PENDIDIKAN',
+'Sertakan tabel khusus berisi:',
+'- Nama konten/fitur dari Rumah Pendidikan yang digunakan',
+'- Ruang yang diakses (Ruang Murid / Ruang GTK / Ruang Bahasa)',
+'- Cara akses oleh guru dan/atau peserta didik',
+'- Titik waktu penggunaan dalam pembelajaran',
+'- Tujuan penggunaan', '');
+
+  push('## STANDAR KUALITAS',
+'- Tujuan pembelajaran guru tidak boleh diubah dalam bentuk apapun',
+'- Masalah utama guru menjadi benang merah dari awal hingga akhir',
+'- Sintak model pembelajaran tampil eksplisit, runtut, dan operasional',
+'- Fitur PID yang dipilih guru terintegrasi pada titik yang tepat,',
+'  terasa natural dan fungsional, bukan dipaksakan',
+'- Konten Rumah Pendidikan pilihan guru substantif dan disertai',
+'  cara akses serta waktu penggunaannya',
+'- Setiap tahap mencerminkan prinsip berkesadaran, bermakna, menggembirakan',
+'- Diferensiasi untuk kondisi kelas dan peserta didik dengan kondisi',
+'  khusus harus tersurat dalam dokumen',
+'- Seluruh konten kontekstual dengan kondisi Indonesia' + (t(S.lokal) ? ' dan daerah setempat' : ''),
+'- Bahasa instruksi operasional — guru bisa langsung mengeksekusi', '');
+
+  push('## FORMAT KELUARAN', ...FORMAT[S.target], '');
+
+  push('// Gunakan bahasa Indonesia formal, tidak kaku, dan operasional.',
+'// Akhiri dengan satu paragraf penutup: gambaran suasana kelas yang diharapkan',
+'// ketika rencana ini dieksekusi dengan baik.',
+'// Guru lain yang membaca dokumen ini harus dapat langsung mengeksekusi.');
+
+  return L.join('\n');
+}
+
+const FORMAT = {
+  gemini: [
+'- Susun sebagai dokumen perencanaan yang rapi dengan judul, subjudul',
+'  bernomor, dan tabel (gunakan tabel Markdown untuk asesmen, rubrik,',
+'  dan integrasi Rumah Pendidikan) agar siap diekspor ke Google Dokumen.',
+'- Tuliskan dokumen secara lengkap dalam satu jawaban; jangan meringkas',
+'  atau menghentikan di tengah. Jika terpotong, lanjutkan saat diminta.'],
+  chatgpt: [
+'- Buat dokumen Word (.docx) yang rapi dan siap unduh: judul, subjudul',
+'  bernomor, dan tabel untuk asesmen, rubrik, serta integrasi Rumah',
+'  Pendidikan. Tampilkan juga ringkasan isinya di jawaban.',
+'- Jangan meringkas bagian mana pun; tulis seluruh isi secara lengkap.'],
+  claude: [
+'- Buat dokumen lengkap dalam satu artifact/file (Markdown terstruktur',
+'  atau .docx) yang rapi dan siap unduh: judul, subjudul bernomor,',
+'  dan tabel untuk asesmen, rubrik, serta integrasi Rumah Pendidikan.',
+'- Sebelum menulis, pastikan setiap input guru di atas telah dipakai;',
+'  jangan meringkas bagian mana pun.']
+};
+
+/* ======================= HIGHLIGHT ======================= */
+function highlight(raw) {
+  let h = esc(raw);
+  h = h.replace(/^(## .*)$/gm, '<span class="h">$1</span>');
+  h = h.replace(/^(\s*\/\/.*)$/gm, '<span class="c">$1</span>');
+  h = h.replace(/^(\s*)([A-Z][A-Za-z\/ ]+?\s*:)(?= )/gm, '$1<span class="lbl">$2</span>');
+  h = h.replace(/^(\s*)(\d+\.|[a-d]\.)(?= )/gm, '$1<span class="num">$2</span>');
+  h = h.replace(/\[x\]/g, '<span class="ck">[x]</span>');
+  h = h.replace(/\[ISIKAN[^\]]*\]/g, m => `<span class="ph">${m}</span>`);
+  h = h.replace(/\u0001/g, '<span class="val">').replace(/\u0002/g, '</span>');
+  return h;
+}
+const plain = s => s.replace(/[\u0001\u0002]/g, '');
+
+/* ======================= UPDATE ======================= */
+let lastPrompt = '';
+function update() {
+  const A = alokasi();
+  $('#alokasiPreview').textContent = A ? A.text : 'Lengkapi jumlah pertemuan, JP, dan menit per JP';
+  const raw = build();
+  lastPrompt = plain(raw);
+  $('#preview').innerHTML = highlight(raw);
+  const words = (lastPrompt.match(/\S+/g) || []).length;
+  $('#counter').textContent = `${words.toLocaleString('id-ID')} kata · ${lastPrompt.length.toLocaleString('id-ID')} karakter`;
+
+  const filled = REQUIRED.filter(k => k === 'model' ? t(modelName()) : t(S[k])).length;
+  const pct = Math.round(filled / REQUIRED.length * 100);
+  $('#progressBar').style.width = pct + '%';
+  $('#progressText').textContent = `${pct}% wajib terisi`;
+
+  const labels = { gemini:'Buka di Gemini', chatgpt:'Buka di ChatGPT', claude:'Buka di Claude' };
+  $('#btnOpenLabel').textContent = labels[S.target];
+  store.set(STORE_KEY, JSON.stringify(S));
+}
+
+/* ======================= EVENTS ======================= */
+function setSintakFromModel() {
+  const steps = MODELS[S.model] || [];
+  S.sintak = steps.map((s,i)=>`Sintak ${i+1} — ${s}`).join('\n');
+  $('[data-k="sintak"]').value = S.sintak;
+}
+
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.dataset.k) { S[el.dataset.k] = el.value; }
+  else if (el.dataset.sub) { S[el.dataset.sub][el.dataset.id] = el.value; }
+  else return;
+  update();
+});
+document.addEventListener('change', e => {
+  if (e.target.id === 'selModel') {
+    S.model = e.target.value;
+    $('#modelLainWrap').classList.toggle('hidden', S.model !== 'Lainnya');
+    setSintakFromModel(); update();
+  }
+});
+document.addEventListener('click', e => {
+  const flip = e.target.closest('[data-flip]');
+  if (flip) {
+    const row = flip.closest('[data-toggle]');
+    const grp = row.dataset.toggle, id = row.dataset.id;
+    S[grp][id] = !S[grp][id];
+    row.classList.toggle('on', S[grp][id]);
+    if (S[grp][id]) setTimeout(() => row.querySelector('.extra input')?.focus(), 30);
+    update(); return;
+  }
+  const chip = e.target.closest('[data-chip]');
+  if (chip) { toggleChip(chip); return; }
+  const tab = e.target.closest('.tab');
+  if (tab) { S.target = tab.dataset.target; $$('.tab').forEach(x => x.classList.toggle('on', x === tab)); update(); }
+});
+document.addEventListener('keydown', e => {
+  const chip = e.target.closest?.('[data-chip]');
+  if (chip && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); toggleChip(chip); }
+});
+function toggleChip(chip) {
+  const arr = S[chip.dataset.chip], v = chip.dataset.v, i = arr.indexOf(v);
+  i >= 0 ? arr.splice(i,1) : arr.push(v);
+  chip.classList.toggle('on', i < 0); chip.setAttribute('aria-checked', i < 0);
+  update();
+}
+
+$('#btnSintak').onclick = () => { setSintakFromModel(); update(); toast('Sintak standar dimuat'); };
+
+function toast(msg) {
+  $('#toastText').textContent = msg;
+  const el = $('#toast'); el.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+async function copyPrompt() {
+  try { await navigator.clipboard.writeText(lastPrompt); }
+  catch {
+    const ta = document.createElement('textarea'); ta.value = lastPrompt; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); ta.remove();
+  }
+}
+$('#btnCopy').onclick = async () => { await copyPrompt(); toast('Prompt berhasil disalin!'); };
+$('#btnOpen').onclick = async () => {
+  await copyPrompt();
+  const url = { gemini:'https://gemini.google.com/app', chatgpt:'https://chatgpt.com/', claude:'https://claude.ai/new' }[S.target];
+  window.open(url, '_blank', 'noopener');
+  toast('Prompt disalin — tempel (Ctrl+V) di jendela AI');
+};
+$('#btnDownload').onclick = () => {
+  const name = ('Prompt-RPM-' + (t(S.mapel) || 'mapel') + '-' + (t(S.topik) || 'topik')).replace(/[^\w\-]+/g,'_').slice(0,80) + '.txt';
+  const blob = new Blob([lastPrompt], { type:'text/plain;charset=utf-8' });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: name });
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast('File .txt diunduh');
+};
+$('#btnReset').onclick = () => {
+  if (!confirm('Kosongkan seluruh isian formulir?')) return;
+  const target = S.target; S = defaults(); S.target = target; fillForm(); toast('Formulir direset');
+};
+$('#btnExample').onclick = () => {
+  const target = S.target;
+  S = Object.assign(defaults(), EXAMPLE, { target });
+  S.prinsip = { ...EXAMPLE.prinsip }; S.prinsipTxt = { ...EXAMPLE.prinsipTxt };
+  S.pid = { ...EXAMPLE.pid }; S.pidTxt = { ...EXAMPLE.pidTxt };
+  S.profil = [...EXAMPLE.profil]; S.ruang = [...EXAMPLE.ruang]; S.asesmen = [...EXAMPLE.asesmen];
+  fillForm(); toast('Contoh isian dimuat');
+};
+
+/* Tema */
+function applyTheme(mode) {
+  document.documentElement.classList.toggle('dark', mode === 'dark');
+  $('#icoSun').classList.toggle('hidden', mode !== 'dark');
+  $('#icoMoon').classList.toggle('hidden', mode === 'dark');
+  store.set('rpm-theme', mode);
+}
+$('#btnTheme').onclick = () => applyTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark');
+applyTheme(store.get('rpm-theme') || 'dark');
+
+/* ======================= CONTOH ISIAN (SMA) ======================= */
+const EXAMPLE = {
+  kelas: 'SMA / Kelas X', mapel: 'Biologi', topik: 'Perubahan Lingkungan dan Pencemaran Air',
+  fase: 'Fase E', jumlahPD: '32',
+  kondisi: 'Kemampuan akademik heterogen; sekitar 6 peserta didik kesulitan memahami teks ilmiah panjang;\nmayoritas bergaya belajar visual-kinestetik; 1 peserta didik low vision (perlu tampilan huruf besar).',
+  pertemuan: '2', jp: '2', menitJP: '45',
+  masalah: 'Peserta didik hafal definisi pencemaran, tetapi belum mampu menghubungkannya dengan kondisi\nnyata di sekitar mereka — misalnya kolong bekas tambang timah dan sungai yang keruh — sehingga\npemahaman bersifat hafalan dan tidak berujung pada sikap peduli lingkungan.',
+  cp: 'Peserta didik memiliki kemampuan menciptakan solusi atas permasalahan-permasalahan berdasarkan\nisu lokal, nasional, atau global terkait pemahaman keanekaragaman makhluk hidup dan peranannya,\nvirus dan peranannya, inovasi teknologi biologi, komponen ekosistem dan interaksi antarkomponen,\nserta perubahan lingkungan.',
+  tp: 'TP-1: Peserta didik dapat menganalisis penyebab dan dampak pencemaran air di lingkungan sekitar\n      berdasarkan data pengamatan.\nTP-2: Peserta didik dapat merancang solusi sederhana untuk mengurangi pencemaran air berbasis\n      isu lokal.\nTP-3: Peserta didik dapat merefleksikan peran dirinya dalam menjaga kelestarian lingkungan.',
+  model: 'Problem-Based Learning (PBL)',
+  sintak: MODELS['Problem-Based Learning (PBL)'].map((s,i)=>`Sintak ${i+1} — ${s}`).join('\n'),
+  prinsip: { mindful:true, meaningful:true, joyful:true },
+  prinsipTxt: {
+    mindful: 'Peserta didik menetapkan target belajar pribadi dan menulis jurnal refleksi 3 menit di akhir sesi',
+    meaningful: 'Menganalisis sampel air dari kolong/sungai terdekat sebagai kasus nyata',
+    joyful: 'Kuis tantangan "Detektif Air" di PID dan galeri karya solusi antarkelompok'
+  },
+  fokusMemahami: 'Menonton video pencemaran air dari Ruang Murid, lalu memetakan sebab–akibat bersama di PID',
+  fokusMengaplikasi: 'Uji sederhana kualitas air (warna, bau, pH) dan merancang poster solusi',
+  fokusMerefleksi: 'Refleksi 3-2-1 dan komitmen aksi pribadi menjaga air',
+  profil: ['Penalaran Kritis','Kolaborasi','Kewargaan'],
+  pid: { anotasi:true, multimedia:true, share:true, dokumen:true },
+  pidTxt: {
+    anotasi: 'Membuat peta konsep sebab–akibat pencemaran secara kolaboratif',
+    multimedia: 'Menayangkan video dan simulasi siklus pencemaran air sebagai pemantik',
+    share: 'Kelompok menampilkan hasil analisis data dari gawai ke PID saat presentasi',
+    dokumen: 'Menyimpan catatan kelas dan membagikannya via QR code kepada peserta didik'
+  },
+  ruang: ['Ruang Murid','Ruang GTK'],
+  kontenRP: 'Video pembelajaran dan Buku digital (Ruang Murid); Modul ajar referensi (Ruang GTK)',
+  rencanaRP: 'Video ditayangkan di PID pada Sintak 1; buku digital diakses peserta didik pada Sintak 3\nsebagai sumber penyelidikan; modul ajar Ruang GTK menjadi referensi guru saat persiapan.',
+  teknologi: 'Google Form untuk kuis diagnostik, Canva untuk poster solusi',
+  lokal: 'Kolong bekas tambang timah dan sungai di sekitar sekolah (Bangka Selatan)',
+  asesmen: ['diagnostik','formatif','sumatif','rubrik']
+};
+
+/* ======================= INIT ======================= */
+buildStatic();
+fillForm();
+</script>
+</body>
+</html>
